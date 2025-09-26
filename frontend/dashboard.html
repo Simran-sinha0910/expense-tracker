@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary-color: #111827;
+      --primary-dark: #0f172a;
+      --primary-light: #374151;
+      --secondary-color: #ffffff;
+      --secondary-dark: #f8fafc;
+      --accent-color: #0ea5e9;
+      --accent-secondary: #10b981;
+      --success-color: #10b981;
+      --warning-color: #f59e0b;
+      --light-bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+      --card-bg: rgba(255, 255, 255, 0.95);
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --shadow-light: 0 4px 6px -1px rgba(17, 24, 39, 0.1), 
+                      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-medium: 0 10px 15px -3px rgba(17, 24, 39, 0.1), 
+                       0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-large: 0 25px 50px -12px rgba(17, 24, 39, 0.25);
+      --gradient-primary: linear-gradient(135deg, #111827, #374151);
+      --gradient-secondary: linear-gradient(135deg, #0ea5e9, #10b981);
+      --gradient-accent: linear-gradient(135deg, #10b981, #0ea5e9);
+    }
+
+    body {
+      background: var(--light-bg);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: 0.2px;
+    }
+
+    h2, h4 {
+      color: var(--text-primary);
+    }
+
+    .btn-primary {
+      background: var(--gradient-secondary);
+      border: none;
+      box-shadow: var(--shadow-medium);
+    }
+    .btn-primary:hover { 
+      background: var(--gradient-accent); 
+      box-shadow: var(--shadow-large); 
+    }
+
+    .btn-danger { box-shadow: var(--shadow-light); }
+
+    .table-responsive { 
+      background: var(--card-bg); 
+      border-radius: 16px; 
+      box-shadow: var(--shadow-light); 
+      padding: 1rem; 
+    }
+    .table thead { 
+      background: var(--primary-dark); 
+      color: #fff; 
+    }
+    .table-striped tbody tr:nth-of-type(odd) { 
+      background-color: rgba(14, 165, 233, 0.04); 
+    }
+    .table-striped tbody tr:hover { 
+      background-color: rgba(16, 185, 129, 0.06); 
+    }
+
+    .badge-total { 
+      background: var(--gradient-secondary); 
+      color: #fff; 
+    }
+
+    .progress {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 9999px;
+    }
+    .progress-bar {
+      background: var(--gradient-secondary);
+      transition: width .4s ease;
+    }
+    .progress.progress-thin { height: 8px; }
+
+    /* Navbar */
+    .navbar-glass {
+      background: rgba(255,255,255,0.9) !important;
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .brand-text {
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Cards */
+    .card {
+      border: none;
+      border-radius: 16px;
+      box-shadow: var(--shadow-light);
+      background: #ffffff;
+    }
+    .card h5 { font-weight: 600; color: #0f172a; }
+    .section-title { display:flex; align-items:center; gap:.5rem; font-weight:700; color:#0f172a; }
+    .section-title i { color:#0ea5e9; }
+    .card-header {
+      background: transparent;
+      border-bottom: 1px solid #eef2f7;
+    }
+
+    /* Budget circle */
+    .budget-card {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+    }
+    .budget-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: conic-gradient(#10B981 0% 0%, #e5e7eb 0% 100%);
+      display: grid;
+      place-items: center;
+      position: relative;
+      box-shadow: var(--shadow-light);
+    }
+    .budget-circle::after {
+      content: '';
+      position: absolute;
+      width: 88px;
+      height: 88px;
+      background: #fff;
+      border-radius: 50%;
+    }
+    .budget-center {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+    .budget-amount {
+      font-weight: 700;
+      color: #1E293B;
+      z-index: 1;
+    }
+    .budget-sub {
+      font-size: 12px;
+      color: #64748B;
+      z-index: 1;
+    }
+
+    /* Filters as chips */
+    .filter-chip {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: .5rem .75rem;
+      box-shadow: var(--shadow-light);
+    }
+    .filter-chip .form-control,
+    .filter-chip .form-select {
+      border: none;
+      box-shadow: none;
+      padding-left: 0;
+    }
+
+    /* Table */
+    table.table {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    thead.table-dark {
+      background: linear-gradient(135deg, #0f172a, #1f2937) !important;
+    }
+    tbody tr:hover {
+      background-color: #F1F5F9;
+    }
+    .action-btn {
+      border: none;
+      background: transparent;
+      color: #ef4444;
+    }
+    .action-btn:hover { opacity: 0.8; }
+
+    /* Micro-interactions */
+    .btn {
+      transition: all .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+
+    /* Indicators */
+    .indicator-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .indicator-green { background:#10b981; box-shadow:0 0 0 3px #10b98122; }
+    .indicator-yellow { background:#f59e0b; box-shadow:0 0 0 3px #f59e0b22; }
+    .indicator-red { background:#ef4444; box-shadow:0 0 0 3px #ef444422; }
+
+    /* Pagination tweaks */
+    #paginationControls .btn { min-width: 72px; }
+
+    /* Category budget cards */
+    #categoryBudgets { display: flex; flex-wrap: wrap; gap: 16px; }
+    .cat-card {
+      flex: 1 1 280px;
+      max-width: 360px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #fff;
+      box-shadow: var(--shadow-light);
+    }
+    .cat-card:hover { box-shadow: var(--shadow-medium); }
+    .cat-card .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+    .cat-card .meta { display:flex; justify-content:space-between; font-size:12px; color:#6b7280; margin-bottom:6px; }
+
+    /* Section spacing */
+    .section-gap { margin-bottom: 28px; }
+    @media (max-width: 576px) { .section-gap { margin-bottom: 20px; } }
+    
+    /* Recommendations styling */
+    #recommendations {
+      background: #FFF9C4; /* soft pastel yellow */
+      color: #FBC02D;      /* dark yellow text for headings/meta */
+      border-radius: 8px;  /* subtle rounded corners */
+      padding: 16px;       /* adequate padding */
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06); /* soft shadow for depth */
+      border: 1px solid rgba(251, 192, 45, 0.25);
+      margin-left: 12px;   /* horizontal spacing */
+      margin-right: 12px;
+    }
+    #recommendations h5 {
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    /* Recommendations list as simple vertical list */
+    #recommendationsList {
+      display: block !important;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    #recommendationsList li {
+      background: rgba(255, 255, 255, 0.7);
+      color: #6b5e00; /* readable dark text for content */
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 8px 0;
+      font-size: 1rem; /* slightly larger font */
+      line-height: 1.5;
+      transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+      border: 1px solid rgba(251, 192, 45, 0.2);
+    }
+    #recommendationsList li:hover {
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-glass sticky-top">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        <i class="fa-solid fa-wallet me-2" style="color:#10B981"></i>
+        <span class="brand-text">Expense Tracker</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarsMain">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarsMain">
+        <ul class="navbar-nav ms-auto align-items-center gap-2">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa-regular fa-user"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="profile.html">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item" onclick="logout()">Logout</button></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="mb-0 fw-bold" style="color:#1E293B">Dashboard</h3>
+        <div class="text-muted small">Overview of your spending and budgets</div>
+      </div>
+      <a href="add-expense.html" class="btn btn-primary d-none d-md-inline-flex"><i class="fa-solid fa-plus me-2"></i>Add Expense</a>
+    </div>
+
+    <!-- Budget Section -->
+    <div class="card p-3 section-gap">
+      <div class="card-body budget-card">
+        <div class="budget-circle" id="budgetCircle">
+          <div class="budget-center">
+            <div class="budget-amount" id="budgetPercent">0%</div>
+            <div class="budget-sub">used</div>
+          </div>
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="mb-0 section-title"><i class="fa-solid fa-gauge"></i> Budget</h5>
+            <div class="d-flex gap-2 align-items-center">
+              <select id="budgetPeriod" class="form-select form-select-sm" style="width:160px" onchange="onPeriodChange()">
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+              </select>
+              <input type="number" id="budgetAmount" placeholder="Enter budget" class="form-control form-control-sm" style="width:180px" />
+              <button class="btn btn-primary btn-sm" onclick="setBudget()"><i class="fa-solid fa-floppy-disk me-1"></i>Save</button>
+            </div>
+          </div>
+          <div id="budgetAlert" class="alert py-2 px-3 mb-3 d-none" role="alert"></div>
+          <div class="d-flex justify-content-between small text-muted mb-2">
+            <span id="budgetStatus">No budget set.</span>
+            <span><span id="budgetUsed">0</span>/<span id="budgetTotal">0</span></span>
+          </div>
+          <div class="progress mt-2">
+            <div id="budgetProgress" class="progress-bar" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Category Budgets -->
+    <div class="card p-3 mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="mb-0 section-title"><i class="fa-solid fa-layer-group"></i> Category Budgets</h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="catAutoToggle" onchange="onCatAutoToggle(this.checked)">
+            <label class="form-check-label small text-muted" for="catAutoToggle">Auto‑fill</label>
+          </div>
+          <select id="catAutoMode" class="form-select form-select-sm" style="width: 180px" onchange="onCatAutoModeChange(this.value)">
+            <option value="last_period" selected>Use Last Period</option>
+            <option value="proportional">Proportional to Main Budget</option>
+          </select>
+        </div>
+      </div>
+      <div id="categoryBudgets" class="row g-3">
+        <!-- Rendered by JS: rows for each category with input and progress bar -->
+      </div>
+    </div>
+
+    <!-- Total Expenses -->
+    <h4 class="mb-4">
+      Total: 
+      <span class="badge badge-total rounded-pill px-3 py-2">
+        <span id="total">0</span> ₹
+      </span>
+    </h4>
+
+    <!-- Filters + Search -->
+    <div class="section-gap">
+      <div id="filtersWrap" class="d-flex flex-wrap gap-2 align-items-end">
+        <div class="filter-chip">
+          <label for="filterCategory" class="form-label small text-muted mb-1">Category</label>
+          <select id="filterCategory" class="form-select form-select-sm">
+            <option value="all" selected>All</option>
+          </select>
+        </div>
+        <div class="filter-chip">
+          <label for="filterFrom" class="form-label small text-muted mb-1">From</label>
+          <input type="date" id="filterFrom" class="form-control form-control-sm" />
+        </div>
+        <div class="filter-chip">
+          <label for="filterTo" class="form-label small text-muted mb-1">To</label>
+          <input type="date" id="filterTo" class="form-control form-control-sm" />
+        </div>
+        <div class="filter-chip">
+          <label for="searchInput" class="form-label small text-muted mb-1">Search</label>
+          <input id="searchInput" type="text" class="form-control form-control-sm" placeholder="Find description/details" oninput="onSearchChange(this.value)">
+        </div>
+        <div class="filter-chip">
+          <label for="pageSize" class="form-label small text-muted mb-1">Rows</label>
+          <select id="pageSize" class="form-select form-select-sm" onchange="onPageSizeChange(this.value)">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div class="filter-chip">
+          <label class="form-label small text-muted mb-1 d-block">Quick Range</label>
+          <div class="btn-group" role="group" aria-label="Quick Ranges">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setQuickRange('this_month')">This Month</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setQuickRange('last_month')">Last Month</button>
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="setQuickRange('this_year')">This Year</button>
+          </div>
+        </div>
+        <div class="filter-chip">
+          <label class="form-label small text-muted mb-1 d-block">Export</label>
+          <button type="button" class="btn btn-success btn-sm" onclick="exportCSV()"><i class="fa-solid fa-file-csv me-1"></i>Export CSV</button>
+        </div>
+        <div class="filter-chip">
+          <label class="form-label small text-muted mb-1 d-block">Actions</label>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" onclick="applyFiltersAndRender()"><i class="fa-solid fa-sliders me-1"></i>Apply</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Expense Table -->
+    <div class="table-responsive section-gap">
+      <table class="table table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>Description</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Details</th>
+            <th>Date</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody id="expenseTable"></tbody>
+      </table>
+    </div>
+    <div id="paginationControls" class="d-flex justify-content-between align-items-center section-gap">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 section-gap">
+      <div class="col-lg-5">
+        <div class="card p-3 shadow-sm h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0 section-title"><i class="fa-solid fa-chart-pie"></i> Expense Breakdown</h5>
+          </div>
+          <canvas id="pieChart" height="260"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-7">
+        <div class="card p-3 shadow-sm h-100">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0 section-title"><i class="fa-solid fa-chart-line"></i> Spending Trend</h5>
+            <select id="trendGranularity" class="form-select form-select-sm" style="width:160px" onchange="onTrendChange()">
+              <option value="daily" selected>Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          <canvas id="barChart" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations & Tips (moved to end) -->
+    <div id="recommendations" class="section-gap">
+      <h5 class="mb-3"><i class="fa-solid fa-lightbulb"></i> Recommendations & Tips</h5>
+      <ul id="recommendationsList"></ul>
+    </div>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1080;"></div>
+  
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/expenses.js"></script>
+  <script src="js/dashboard.js?v=3"></script>
+</body>
+</html>

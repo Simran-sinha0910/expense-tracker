@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #111827; /* black */
+            --primary-dark: #0f172a;   /* near-black */
+            --primary-light: #374151;  /* charcoal */
+            --secondary-color: #ffffff; /* white */
+            --secondary-dark: #f8fafc;  /* off white */
+            --accent-color: #0ea5e9;    /* teal */
+            --accent-secondary: #10b981;/* mint */
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --light-bg: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --shadow-light: 0 4px 6px -1px rgba(17, 24, 39, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-medium: 0 10px 15px -3px rgba(17, 24, 39, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-large: 0 25px 50px -12px rgba(17, 24, 39, 0.25);
+            --gradient-primary: linear-gradient(135deg, #111827, #374151);
+            --gradient-secondary: linear-gradient(135deg, #0ea5e9, #10b981);
+            --gradient-accent: linear-gradient(135deg, #10b981, #0ea5e9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--light-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            z-index: -1;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: var(--shadow-large);
+            padding: 3rem;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .login-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                padding: 2rem;
+                margin: 10px;
+            }
+        }
+
+        .logo {
+            font-family: 'Inter', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: var(--gradient-secondary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            animation: fadeInDown 0.8s ease-out 0.2s both;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .form-control {
+            border-radius: 15px;
+            padding: 1rem 1.5rem;
+            border: 2px solid rgba(14, 165, 233, 0.15);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+            background: rgba(255, 255, 255, 0.98);
+            transform: translateY(-2px);
+        }
+
+        .form-group::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 1.5rem;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            opacity: 0.5;
+            transition: all 0.3s ease;
+        }
+
+        .form-group:has(#logEmail)::before {
+            content: '📧';
+            font-size: 1.2rem;
+        }
+
+        .form-group:has(#logPass)::before {
+            content: '🔒';
+            font-size: 1.2rem;
+        }
+
+        .form-group:has(.form-control:focus)::before {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.2);
+        }
+
+        .btn-success {
+            border-radius: 15px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            background: var(--gradient-secondary);
+            border: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-medium);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-large);
+            background: var(--gradient-accent);
+        }
+
+        .btn-success:hover::before {
+            left: 100%;
+        }
+
+        .btn-success:active {
+            transform: translateY(-1px);
+        }
+
+        .forgot-password {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+            display: block;
+            text-align: right;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out 0.8s both;
+        }
+
+        .forgot-password:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .register-link {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(99, 102, 241, 0.1);
+            animation: fadeInUp 0.8s ease-out 1s both;
+        }
+
+        .register-link a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .register-link a:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading .btn-success {
+            position: relative;
+        }
+
+        .loading .btn-success::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">Welcome Back</div>
+        <div class="form-group">
+            <input id="logEmail" class="form-control" placeholder="Enter your email address" type="email">
+        </div>
+        <div class="form-group">
+            <input id="logPass" class="form-control" type="password" placeholder="Enter your password">
+        </div>
+        <button type="button" onclick="loginUser()" class="btn btn-success w-100">Sign In</button>
+        <a href="#" class="forgot-password">Forgot your password?</a>
+        <div class="register-link">
+            <p>Don't have an account? <a href="register.html">Create Account</a></p>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
