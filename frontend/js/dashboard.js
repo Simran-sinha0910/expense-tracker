@@ -1140,6 +1140,27 @@ function generateRecommendations() {
     }
     const cap = requiredDailyCapToStayWithinBudget();
     if (cap !== null) recs.push(`To stay within budget, keep daily spend under ₹${cap.toFixed(0)} for the rest of this ${budgetPeriod}.`);
+
+    // Proactive guidance when not exceeding budget
+    const remaining = Math.max(0, b - periodTotal);
+    if (percent > 0 && percent < 70) {
+      const basis = (cap !== null && !isNaN(cap)) ? cap : avg;
+      const softCap = Math.round(Math.max(1, Math.min(basis, basis * 0.9)));
+      if (softCap > 0) recs.push(`Stay on track by setting a soft daily cap at ₹${softCap}. Skip one impulse buy and log every purchase for the next 7 days.`);
+    }
+    if (percent <= 50 && remaining > 0) {
+      recs.push(`Great pace: consider moving ₹${Math.round(remaining * 0.2)} (20% of remaining) to savings now to lock in progress.`);
+      recs.push(`Try two no‑spend days this week and plan 3 home‑cooked meals to keep momentum.`);
+    }
+    // Suggest a weekly cap for top discretionary category
+    try {
+      const topEntry = Object.entries(byCategory).sort((a,b)=>b[1]-a[1])[0];
+      const topCat = topEntry ? topEntry[0] : null;
+      if (topCat && (topCat === 'Dining Out' || topCat === 'Entertainment' || topCat === 'Shopping')) {
+        const weeklyCap = Math.max(300, Math.round(b * 0.05));
+        recs.push(`${topCat}: set a weekly spending limit of ₹${weeklyCap} and track it with a simple envelope or note.`);
+      }
+    } catch {}
   }
 
   // High‑spending categories
@@ -1212,21 +1233,133 @@ function generateRecommendations() {
   return recs.filter(t => { if (seen.has(t)) return false; seen.add(t); return true; });
 }
 
-function renderRecommendations() {
+// ---------- AI Insights (Option C: Full AI with fallback) ----------
+function aiTipsEnabled() {
+  try { return JSON.parse(localStorage.getItem('aiTipsEnabled') || 'true'); } catch { return true; }
+}
+
+function getAiCacheKey() {
+  return `aiTipsCache_${budgetPeriod}`;
+}
+
+function readAiCache(maxAgeMs = 30 * 1000) { // 30 seconds to keep tips fresh
+  try {
+    const raw = sessionStorage.getItem(getAiCacheKey());
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !Array.isArray(obj.tips) || !obj.ts) return null;
+    if (Date.now() - obj.ts > maxAgeMs) return null;
+    return obj.tips;
+  } catch { return null; }
+}
+
+function writeAiCache(tips) {
+  try { sessionStorage.setItem(getAiCacheKey(), JSON.stringify({ tips, ts: Date.now() })); } catch {}
+}
+
+async function fetchAiTips() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  try {
+    const res = await fetch('http://localhost:5000/api/ai/insights', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: JSON.stringify({ period: budgetPeriod }),
+    });
+    if (res.status === 204) return null; // explicit fallback
+    if (!res.ok) throw new Error(`AI ${res.status}`);
+    const data = await res.json();
+    const tips = Array.isArray(data?.tips) ? data.tips.filter(Boolean).map(String).map(normalizeCurrencySymbols) : null;
+    return tips && tips.length ? tips : null;
+  } catch (e) {
+    console.warn('AI tips unavailable:', e?.message || e);
+    return null;
+  }
+}
+
+function normalizeCurrencySymbols(s) {
+  try {
+    // Replace leading dollar signs before amounts with INR symbol
+    // Examples: $100 -> ₹100, USD 100 -> ₹100 (optional simple handling)
+    let out = String(s);
+    out = out.replace(/\$(\s?)(?=\d)/g, '₹$1');
+    out = out.replace(/\bUSD\s*(?=\d)/gi, '₹');
+    return out;
+  } catch { return String(s); }
+}
+
+// Debounce + in-flight guard
+let aiInFlight = null;
+let lastAiFetchTs = 0;
+const AI_MIN_INTERVAL_MS = 15000; // 15s throttle on the client side
+
+function getAiTipsDebounced() {
+  if (!aiTipsEnabled()) return Promise.resolve(null);
+  const now = Date.now();
+  const cached = readAiCache();
+  // If we fetched recently, serve cache and skip
+  if (now - lastAiFetchTs < AI_MIN_INTERVAL_MS) {
+    return Promise.resolve(cached);
+  }
+  if (aiInFlight) return aiInFlight;
+  aiInFlight = (async () => {
+    try {
+      const tips = await fetchAiTips();
+      if (Array.isArray(tips) && tips.length) {
+        writeAiCache(tips);
+      }
+      lastAiFetchTs = Date.now();
+      return tips || cached || null;
+    } finally {
+      aiInFlight = null;
+    }
+  })();
+  return aiInFlight;
+}
+
+function mergeTips(ruleTips, aiTips, maxAi = 3) {
+  const out = [];
+  const seen = new Set();
+  const add = (t) => { const s = String(t).trim(); if (!s || seen.has(s)) return; seen.add(s); out.push(s); };
+  if (Array.isArray(aiTips) && aiTips.length) {
+    aiTips.slice(0, Math.max(0, maxAi)).forEach(add);
+  }
+  (Array.isArray(ruleTips) ? ruleTips : []).forEach(add);
+  return out;
+}
+
+function updateRecommendationsList(tips) {
   const list = document.getElementById('recommendationsList');
-  if (!list) return; // Do nothing if section not present on page
-  const overspendInput = buildOverspendInput();
-  const overspendTips = generateOverspendRecommendations(overspendInput);
-  const genericTips = generateRecommendations();
-  // Merge with overspend-specific tips prioritized first
-  const tips = [...overspendTips, ...genericTips];
-  // Empty state
-  if (!tips.length) {
+  if (!list) return;
+  if (!tips || !tips.length) {
     list.innerHTML = '<li class="text-muted">No tips yet. Add more expenses or set budgets to see recommendations.</li>';
     return;
   }
-  // Deduplicate final tips while preserving order
   const seen = new Set();
   const finalTips = tips.filter(t => { if (seen.has(t)) return false; seen.add(t); return true; });
   list.innerHTML = finalTips.map(t => `<li class="list-item">${t}</li>`).join('');
+}
+
+function renderRecommendations() {
+  // 1) Render rule-based immediately for instant feedback
+  const overspendInput = buildOverspendInput();
+  const overspendTips = generateOverspendRecommendations(overspendInput);
+  const genericTips = generateRecommendations();
+  let ruleTips = [...overspendTips, ...genericTips];
+  updateRecommendationsList(ruleTips);
+
+  // 2) In the background, try AI and replace if available
+  getAiTipsDebounced().then(aiTips => {
+    if (!Array.isArray(aiTips) || !aiTips.length) return;
+    // Recompute rule tips to ensure freshness at merge time
+    const o2 = buildOverspendInput();
+    const r2 = generateOverspendRecommendations(o2);
+    const g2 = generateRecommendations();
+    const latestRule = [...r2, ...g2];
+    const merged = mergeTips(latestRule, aiTips, 3);
+    updateRecommendationsList(merged);
+  }).catch(()=>{});
 }
