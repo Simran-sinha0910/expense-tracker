@@ -1,0 +1,2 @@
+Place your images here: ex1.jpg, ex2.jpg, ex3.jpg
+They will be served at /ex1.jpg, /ex2.jpg, /ex3.jpg

@@ -1,0 +1,40 @@
+:root { --primary: #2f80ed; --bg: #0f172a; --panel: #111827; --text: #e5e7eb; --muted: #9ca3af; --danger: #ef4444; }
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; font-family: Inter, system-ui, Arial; background: var(--bg); color: var(--text); }
+a { color: var(--text); text-decoration: none; }
+button { cursor: pointer; }
+
+.app-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; background: var(--panel); border-bottom:1px solid #1f2937; }
+.app-header .brand { font-weight: 700; color: var(--primary); }
+.app-header nav { display:flex; gap:12px; }
+.app-header .account { display:flex; align-items:center; gap:12px; }
+.app-header button { background:#1f2937; color:var(--text); border:1px solid #374151; padding:6px 10px; border-radius:6px; }
+
+.app-footer { padding:24px; text-align:center; color:var(--muted); border-top:1px solid #1f2937; margin-top:auto; }
+
+.container { max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+.panel { background: var(--panel); border: 1px solid #1f2937; border-radius: 10px; padding: 16px; }
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+.center { display:flex; align-items:center; justify-content:center; padding: 40px; }
+
+.form { display:grid; gap:12px; }
+.input { width:100%; padding:10px 12px; background:#0b1225; border:1px solid #1f2937; border-radius:8px; color:var(--text); }
+.label { color: var(--muted); font-size: 14px; }
+.btn { background: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px; }
+.btn.secondary { background:#1f2937; border:1px solid #374151; }
+.btn.danger, .danger { background: var(--danger); }
+
+.expense-card { background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; color:#0f172a; }
+.expense-row { display:flex; align-items:center; gap:12px; flex-wrap: nowrap; }
+.expense-row .exp-cell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.expense-row .exp-desc { flex: 2 1 40%; }
+.expense-row .exp-cat { flex: 0 0 120px; text-align:left; }
+.expense-row .exp-date { flex: 0 0 140px; text-align:left; }
+.expense-row .exp-details { flex: 2 1 40%; }
+.expense-row .exp-amount { margin-left: auto; text-align: right; min-width: 100px; }
+.expense-title { font-weight: 600; color:#0f172a; }
+.expense-meta { color:#6b7280; font-size: 12px; }
+.expense-amount { font-weight: 700; color:#111827; }
